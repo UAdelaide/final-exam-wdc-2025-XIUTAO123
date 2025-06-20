@@ -111,41 +111,59 @@ let db;
                                ((SELECT dog_id FROM Dogs WHERE name = 'Bella'), '2025-06-10 09:30:00', 45,
                                 'Beachside Ave', 'accepted'),
                                ((SELECT dog_id FROM Dogs WHERE name = 'xiaoxiutao'), '2025-06-12 10:00:00', 50,
-                                'Linden Park', 'open'),
+                                'Linden Park', 'completed'),
                                ((SELECT dog_id FROM Dogs WHERE name = 'daxiutao'), '2025-06-12 11:00:00', 30,
-                                'Linden Park', 'accepted'),
+                                'Linden Park', 'completed'),
                                ((SELECT dog_id FROM Dogs WHERE name = 'xiaoice'), '2025-06-15 06:00:00', 90,
-                                'University of Adelaide', 'open')`);
+                                'University of Adelaide', 'completed')`);
       await db.execute(`INSERT INTO WalkApplications (request_id, walker_id, status)
                         VALUES ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'Bella')),
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'Max')
+                                   AND requested_time = '2025-06-10 08:00:00'),
+                                (SELECT user_id FROM Users WHERE username = 'icetea'), 'pending'),
+                               ((SELECT request_id
+                                 FROM WalkRequests
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'Bella')
+                                   AND requested_time = '2025-06-10 09:30:00'),
                                 (SELECT user_id FROM Users WHERE username = 'bobwalker'), 'accepted'),
                                ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'daxiutao')),
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoxiutao')
+                                   AND requested_time = '2025-06-12 10:00:00'),
                                 (SELECT user_id FROM Users WHERE username = 'bobwalker'), 'accepted'),
                                ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoice')),
-                                (SELECT user_id FROM Users WHERE username = 'icetea'), 'accepted'),
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'daxiutao')
+                                   AND requested_time = '2025-06-12 11:00:00'),
+                                (SELECT user_id FROM Users WHERE username = 'bobwalker'), 'accepted'),
                                ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'Max')),
-                                (SELECT user_id FROM Users WHERE username = 'icetea'), 'pending')`);
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoice')
+                                   AND requested_time = '2025-06-15 06:00:00'),
+                                (SELECT user_id FROM Users WHERE username = 'icetea'), 'accepted')`);
       await db.execute(`INSERT INTO WalkRatings (request_id, walker_id, owner_id, rating, comments)
                         VALUES ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'daxiutao')),
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoxiutao')
+                                   AND requested_time = '2025-06-12 10:00:00'),
                                 (SELECT user_id FROM Users WHERE username = 'bobwalker'),
                                 (SELECT user_id FROM Users WHERE username = 'xiutao'),
-                                5, 'bobwalker is good for daxiutao!'),
+                                4, 'bobwalker is good for xiaoxiutao'),
                                ((SELECT request_id
                                  FROM WalkRequests
-                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoice')),
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'daxiutao')
+                                   AND requested_time = '2025-06-12 11:00:00'),
+                                (SELECT user_id FROM Users WHERE username = 'bobwalker'),
+                                (SELECT user_id FROM Users WHERE username = 'xiutao'),
+                                5, 'bobwalker is good for daxiutao'),
+                               ((SELECT request_id
+                                 FROM WalkRequests
+                                 WHERE dog_id = (SELECT dog_id FROM Dogs WHERE name = 'xiaoice')
+                                   AND requested_time = '2025-06-15 06:00:00'),
                                 (SELECT user_id FROM Users WHERE username = 'icetea'),
                                 (SELECT user_id FROM Users WHERE username = 'alice123'),
-                                4, 'icetea is good for xiaoice!')`);
+                                3, 'icetea is good for xiaoice');`);
     }
   } catch (err) {
     console.error(
@@ -155,11 +173,83 @@ let db;
   }
 })();
 
-app.get("/api/dogs", async (req, res) => { });
+app.get("/api/dogs", async (req, res) => {
+  try {
+    const query = `SELECT d.name, d.size, u.username
+                          FROM Dogs d
+                          JOIN Users u ON u.user_id = d.owner_id`;
+    const [results] = await db.execute(query);
 
-app.get("/api/walkrequests/", async (req, res) => { });
+    const formatedResults = results.map((result) => {
+      return {
+        dog_name: result.name,
+        size: result.size,
+        owner_username: result.username,
+      };
+    });
+    res.json(formatedResults);
+  } catch (e) {
+    console.error("Failed to fetch dogs:", e);
+    res.status(500).json({ error: "Failed to fetch dogs" });
+  }
+});
 
-app.get("/api/walkers/summary", async () => { });
+app.get("/api/walkrequests/", async (req, res) => {
+  try {
+    const query = `SELECT w.request_id, d.name, w.requested_time, w.duration_minutes, w.location, u.username
+                          FROM WalkRequests w
+                          JOIN Dogs d ON d.dog_id = w.dog_id
+                          JOIN Users u ON u.user_id = d.owner_id
+                          WHERE w.status = 'open'`;
+    const [results] = await db.execute(query);
+
+    const formatedResults = results.map((result) => {
+      return {
+        request_id: result.request_id,
+        dog_name: result.name,
+        requested_time: result.requested_time,
+        duration_minutes: result.duration_minutes,
+        location: result.location,
+        owner_username: result.username,
+      };
+    });
+    res.json(formatedResults);
+  } catch (e) {
+    console.error("Failed to fetch walk requests:", e);
+    res.status(500).json({ error: "Failed to fetch walk requests" });
+  }
+});
+
+app.get("/api/walkers/summary", async (req, res) => {
+  try {
+    const query = `SELECT u.username,
+                          COUNT(wra.rating_id) AS total_ratings,
+                          AVG(wra.rating) AS average_rating,
+                          COUNT(DISTINCT CASE WHEN wr.status = 'completed' THEN wr.request_id END) AS completed_walks
+                          FROM Users u
+                          LEFT JOIN WalkApplications wa ON wa.walker_id = u.user_id AND wa.status = 'accepted'
+                          LEFT JOIN WalkRequests wr ON wr.request_id = wa.request_id AND wr.status = 'completed'
+                          LEFT JOIN WalkRatings wra ON wra.request_id = wr.request_id AND wra.walker_id = u.user_id
+                          WHERE u.role = 'walker'
+                          GROUP BY u.user_id;`;
+
+    const [results] = await db.execute(query);
+    const formattedResults = results.map((result) => {
+      return {
+        walker_username: result.username,
+        total_ratings: Number(result.total_ratings) || 0,
+        average_rating: result.average_rating
+          ? Number(parseFloat(result.average_rating).toFixed(1))
+          : null,
+        completed_walks: Number(result.completed_walks) || 0,
+      };
+    });
+    res.json(formattedResults);
+  } catch (e) {
+    console.error("Failed to fetch walker summary:", e);
+    res.status(500).json({ error: "Failed to fetch walker summary" });
+  }
+});
 
 app.use(express.static(path.join(__dirname, "public")));
 
