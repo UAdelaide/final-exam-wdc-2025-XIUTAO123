@@ -194,7 +194,7 @@ app.get("/api/dogs", async (req, res) => {
   }
 });
 
-app.get("/api/walkrequests/", async (req, res) => {
+app.get("/api/walkrequests/open", async (req, res) => {
   try {
     const query = `SELECT w.request_id, d.name, w.requested_time, w.duration_minutes, w.location, u.username
                           FROM WalkRequests w
