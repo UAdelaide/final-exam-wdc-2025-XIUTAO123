@@ -48,7 +48,6 @@
         const walks = ref([]);
         const message = ref('');
         const error = ref('');
-        const user = 3;
 
         async function loadWalkRequests() {
           try {
@@ -60,12 +59,43 @@
           }
         }
 
+        // Method to get current user info from session
+        async function getCurrentUser() {
+          try {
+            // Make a get request to the current user api
+            const response = await fetch('/api/users/me')
+
+            // If the response is ok, return the user data
+            if (response.ok) {
+              const data = await response.json();
+              return data;
+            } else {
+              // If any error happens, show error message in console
+              console.log("Error during get current user:", e);
+              return null;
+            }
+          } catch (e) {
+            // If any error happens, show error message in console
+            console.log("Error during get current user:", e);
+            return null;
+          }
+        }
+
         async function applyToWalk(requestId) {
           try {
+            // Get the current user info using getCurrentUser method
+            const user = await getCurrentUser();
+
+            // If user is not logged in, do nothing
+            if (!user) {
+              return;
+            }
+
+            // Make a post request to apply for the walk
             const res = await fetch(`/api/walks/${requestId}/apply`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ walker_id: user })
+              body: JSON.stringify({ walker_id: user.user_id }) // use current user's user id
             });
             const result = await res.json();
 
