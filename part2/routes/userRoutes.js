@@ -68,4 +68,25 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST logout to destroy session and cookie
+router.post('/logout', async (req, res) => {
+  try {
+    // Destroy the session
+    req.session.destroy((error) => {
+      if (error) {
+        return res.status(500).json({ error: 'Logout failed' });
+      }
+
+      // Clear the session cookie with connect.sid (default cookie name)
+      res.clearCookie('connect.sid');
+
+      // Return ok response
+      res.json({ message: 'Logout successful' });
+    })
+  } catch (error) {
+    // If an error happens when destroy the session, return a error response
+    res.status(500).json({ error: 'Logout successful' });
+  }
+});
+
 module.exports = router;

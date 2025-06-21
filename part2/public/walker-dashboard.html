@@ -9,7 +9,12 @@
 </head>
 <body class="bg-light">
   <div id="app" class="container py-4">
-    <h1 class="mb-4 text-success">Walker Dashboard</h1>
+    <!-- Header with title and logout button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="text-success">Walker Dashboard</h1>
+      <!-- Logout button which calls handleLogout method -->
+      <button class="btn btn-danger" @click="handleLogout">Logout</button>
+    </div>
 
     <!-- Alert messages -->
     <div v-if="message" class="alert alert-info">{{ message }}</div>
@@ -74,6 +79,26 @@
           }
         }
 
+        // Method to handle logout
+        async function handleLogout() {
+          try {
+            // Make a post request to the logout api
+            const response = await fetch('/api/users/logout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            // If logout is successful, redirect to the home page
+            if (response.ok) {
+              window.location.href = '/';
+            }
+          } catch (e) {
+            // If any error happens, redirect to the home page
+            console.log("Error during logout:", e);
+            window.location.href = '/';
+          }
+        }
+
         onMounted(() => {
           loadWalkRequests();
         });
@@ -82,7 +107,8 @@
           walks,
           message,
           error,
-          applyToWalk
+          applyToWalk,
+          handleLogout  // handleLogout method to be used in the template
         };
       }
     }).mount('#app');
