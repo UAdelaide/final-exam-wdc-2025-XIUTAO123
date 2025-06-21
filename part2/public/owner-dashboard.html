@@ -24,8 +24,16 @@
       <div class="card-body">
         <form @submit.prevent="submitWalkRequest">
           <div class="mb-3">
-            <label class="form-label">Dog ID</label>
-            <input v-model="form.dog_id" type="number" class="form-control" required>
+            <!-- Dropdown to select a dog -->
+            <label class="form-label" for="dog-select">Select Your Dog</label>
+            <select v-model="form.dog_id" id="dog-select" class="form-control" required>
+              <!-- disabled option for placeholder -->
+              <option value="" disabled selected>-- Choose a dog --</option>
+              <!-- get dogs from the dogs array and display their names -->
+              <option v-for="dog in dogs" :key="dog.dog_id" :value="dog.dog_id">
+                {{ dog.name }}
+              </option>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label">Requested Date & Time</label>
@@ -81,6 +89,7 @@
           location: ''
         });
 
+        const dogs = ref([]); // Array to store the current user's dogs
         const walks = ref([]);
         const message = ref('');
         const error = ref('');
@@ -91,6 +100,29 @@
             walks.value = await res.json();
           } catch (err) {
             error.value = 'Failed to load walk requests';
+          }
+        }
+
+        // load current user's dogs
+        async function loadDogs() {
+          try {
+            // Get the dogs for the current user
+            const response = await fetch('/api/users/dogs');
+
+            // Check if the response is ok， if not, set an error message and return
+            if (!response.ok) {
+              error.value = 'Failed to load dogs';
+              return;
+            }
+
+            // Get the JSON data from the response
+            const data = await response.json();
+            // Set the dogs data to the dogs ref
+            dogs.value = data;
+            console.log(dogs.value)
+          } catch (err) {
+            // If any error happens, set an error message
+            error.value = 'Failed to load dogs';
           }
         }
 
@@ -140,12 +172,15 @@
             }
         }
 
+        // Load walks and dogs when the component is mounted
         onMounted(() => {
           loadWalks();
+          loadDogs(); // load dogs when the component is mounted
         });
 
         return {
           form,
+          dogs, // dogs array to be used in the template
           walks,
           message,
           error,

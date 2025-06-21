@@ -89,4 +89,30 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+// Get dogs owned by user id
+router.get('/dogs',async (req,res)=>{// Check if user is logged in, if not, return 401
+  try {
+    // Check if session and user exist
+    if (!req.session) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+    if (!req.session.user) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+
+    // Get dogs owned by the user from the database by owner_id
+    const [rows] = await db.query(`
+      SELECT dog_id, name, size
+      FROM Dogs
+      WHERE owner_id = ?;
+    `, [req.session.user.user_id]);
+
+    // Return ok response with dogs
+    res.json(rows);
+  } catch (e) {
+    // If an error happens when getting dogs, return a error response
+    res.status(500).json({ error: 'Failed to get dogs' });
+  }
+})
+
 module.exports = router;
