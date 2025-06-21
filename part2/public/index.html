@@ -1,33 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dog Walking Service</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <meta charset="UTF-8">
+    <title>Dog Walking Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body class="bg-light">
 
-  <div id="app" class="container py-5">
+<div id="app" class="container py-5">
     <h1 class="mb-4 text-primary">{{ message }}</h1>
     <p class="lead">Connect with trusted walkers for your beloved dog!</p>
 
-    <a href="owner-dashboard.html" class="btn btn-outline-primary me-2">Owner Dashboard</a>
-    <a href="walker-dashboard.html" class="btn btn-outline-success">Walker Dashboard</a>
-  </div>
+    <form @submit.prevent="handleLogin">
+        <div class="mb-4">
+            <label for="username" class="form-label">Username</label>
+            <input v-model="username" type="text" class="form-control" id="username" required>
+        </div>
+        <div class="mb-4">
+            <label for="password" class="form-label">Password</label>
+            <input v-model="password" type="password" class="form-control" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Log In</button>
+        <div v-if="errorMessage" class="mt-3 alert alert-danger">
+            {{ errorMessage }}
+        </div>
+    </form>
+</div>
 
-  <script>
-    const { createApp } = Vue;
+<script>
+    const {createApp} = Vue;
     createApp({
-      data() {
-        return {
-          message: 'Welcome to the Dog Walking Service!'
-        };
-      }
-    }).mount('#app');
-  </script>
+        data() {
+            return {
+                message: 'Welcome to the Dog Walking Service!',
+                username: '',
+                password: '',
+                errorMessage: ''
+            };
+        },
+        methods: {
+            async handleLogin() {
+                try {
+                    // Reset error message
+                    this.errorMessage = "";
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                    // Make a POST request to the login API
+                    const response = await fetch('/api/users/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: this.username,
+                            password: this.password
+                        })
+                    });
+
+                    const data = await response.json();
+                    console.log(data);
+
+                    // Check if the response is ok and user role exists
+                    if (response.ok) {
+                        if (data.user.role === 'owner') {
+                            //if user is owner, redirect to owner dashboard
+                            window.location.href = '/owner-dashboard.html';
+                        } else if (data.user.role === 'walker') {
+                            //if user is walker, redirect to walker dashboard
+                            window.location.href = '/walker-dashboard.html';
+                        } else {
+                            // If the user role does not exist, set the error message
+                            this.errorMessage = "An error occurred during login as role does not exists. Please try again.";
+                        }
+                    } else {
+                        // If the response is not ok, set the error message
+                        this.errorMessage = data.message || "An error occurred during login. Please try again.";
+                    }
+                } catch (e) {
+                    // If any error happens, set the error message
+                    this.errorMessage = "An error occurred during login. Please try again.";
+                    console.log("Error during login:", e);
+                }
+            }
+        }
+    }).mount('#app');
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
