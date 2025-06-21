@@ -115,4 +115,21 @@ router.get('/dogs',async (req,res)=>{// Check if user is logged in, if not, retu
   }
 })
 
+// Get all dogs
+router.get('/dogs/all',async (req,res)=>{// Check if user is logged in, if not, return 401
+  try {
+    // Get all dogs from the database
+    const [rows] = await db.query(`
+      SELECT dog_id, name, size, owner_id
+      FROM Dogs
+    `);
+
+    // Return ok response with dogs
+    res.json(rows);
+  } catch (e) {
+    // If an error happens when getting dogs, return a error response
+    res.status(500).json({ error: 'Failed to get dogs' });
+  }
+})
+
 module.exports = router;
