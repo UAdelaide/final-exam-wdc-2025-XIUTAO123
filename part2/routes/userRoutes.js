@@ -37,6 +37,7 @@ router.get('/me', (req, res) => {
 
 // POST login
 router.post('/login', async (req, res) => {
+  // Get username and password from request body
   const { username, password } = req.body;
 
   try {
@@ -46,6 +47,7 @@ router.post('/login', async (req, res) => {
       WHERE username = ? AND password_hash = ?
     `, [username, password]);
 
+    // If no user found, return error
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -59,6 +61,7 @@ router.post('/login', async (req, res) => {
 
     // console.log(req.session);
 
+    // Return ok response with user info
     res.json({ message: 'Login successful', user: rows[0] });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });

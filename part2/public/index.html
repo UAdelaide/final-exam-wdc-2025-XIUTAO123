@@ -13,7 +13,9 @@
     <h1 class="mb-4 text-primary">{{ message }}</h1>
     <p class="lead">Connect with trusted walkers for your beloved dog!</p>
 
+    <!-- Form for login which call handleLogin function -->
     <form @submit.prevent="handleLogin">
+        <!-- Username and password fields -->
         <div class="mb-4">
             <label for="username" class="form-label">Username</label>
             <input v-model="username" type="text" class="form-control" id="username" required>
@@ -23,6 +25,7 @@
             <input v-model="password" type="password" class="form-control" id="password" required>
         </div>
         <button type="submit" class="btn btn-primary">Log In</button>
+        <!-- Error message display -->
         <div v-if="errorMessage" class="mt-3 alert alert-danger">
             {{ errorMessage }}
         </div>
@@ -33,6 +36,7 @@
     const {createApp} = Vue;
     createApp({
         data() {
+            // Initialize data properties, add username, password, and errorMessage
             return {
                 message: 'Welcome to the Dog Walking Service!',
                 username: '',
@@ -46,7 +50,7 @@
                     // Reset error message
                     this.errorMessage = "";
 
-                    // Make a POST request to the login API
+                    // Make a post request to the login api
                     const response = await fetch('/api/users/login', {
                         method: 'POST',
                         headers: {

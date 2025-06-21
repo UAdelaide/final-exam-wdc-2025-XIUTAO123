@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const session = require('express-session');
+const session = require('express-session'); // add require statement for express session
 require('dotenv').config();
 
 const app = express();
@@ -12,7 +12,7 @@ app.use(
         secret: 'xiutao-dogwalk-session-secret',
         resave: false,
         saveUninitialized: false,
-        cookie: { maxAge: 1000 * 60 * 60 * 24 },
+        cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 day
     }),
 );
 app.use(express.json());
